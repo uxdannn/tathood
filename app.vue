@@ -1,3 +1,4 @@
+<!-- app.vue -->
 <template>
-  <NuxtLayout name="default" />
+  <NuxtLayout /> <!-- KEIN name="default" nötig -->
 </template>
