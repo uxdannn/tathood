@@ -1,27 +1,23 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '~/lib/supabaseClient'
 import { useAuth } from '~/composables/useAuth'
 
 const email = ref('')
 const password = ref('')
-const error = ref('')
+const error = ref(null)
+
 const router = useRouter()
-const { setUser } = useAuth()
+const { login } = useAuth()
 
 const handleLogin = async () => {
-  error.value = ''
+  error.value = null
 
-  const { error: loginError } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value
-  })
+  const { error: loginError } = await login(email.value, password.value)
 
   if (loginError) {
-    error.value = 'Login fehlgeschlagen'
+    error.value = loginError.message
   } else {
-    await setUser()
     router.push('/account')
   }
 }
@@ -31,10 +27,16 @@ const handleLogin = async () => {
   <div>
     <h1>Login</h1>
     <form @submit.prevent="handleLogin">
-      <input v-model="email" type="email" placeholder="E-Mail" required />
-      <input v-model="password" type="password" placeholder="Passwort" required />
+      <input v-model="email" placeholder="Email" />
+      <input type="password" v-model="password" placeholder="Passwort" />
       <button type="submit">Login</button>
-      <p v-if="error">{{ error }}</p>
     </form>
+    <p v-if="error">❌ {{ error }}</p>
   </div>
 </template>
+
+<style scoped>
+form {
+  margin-bottom: 20px;
+}
+</style>

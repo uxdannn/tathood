@@ -1,4 +1,7 @@
-<!-- app.vue -->
+<script setup>
+import { useAuth } from '~/composables/useAuth'
+</script>
+
 <template>
-  <NuxtLayout /> <!-- KEIN name="default" nötig -->
+  <NuxtLayout />
 </template>

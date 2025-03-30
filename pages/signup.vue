@@ -1,36 +1,42 @@
 <script setup>
-
 import { ref } from 'vue'
-import { supabase } from '~/lib/supabaseClient'
+import { useRouter } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
 
 const email = ref('')
 const password = ref('')
-const errorMsg = ref('')
-const success = ref(false)
+const error = ref(null)
 
-const handleSignup = async () => {
-  const { data, error } = await supabase.auth.signUp({
-    email: email.value,
-    password: password.value
-  })
+const router = useRouter()
+const { signUp } = useAuth()
 
-  if (error) {
-    errorMsg.value = error.message
+const handleSignUp = async () => {
+  error.value = null
+
+  const { error: signUpError } = await signUp(email.value, password.value)
+
+  if (signUpError) {
+    error.value = signUpError.message
   } else {
-    success.value = true
+    router.push('/account')
   }
 }
 </script>
 
 <template>
-  <h1>Registrieren</h1>
-
-  <form @submit.prevent="handleSignup">
-    <input type="email" v-model="email" placeholder="E-Mail" required />
-    <input type="password" v-model="password" placeholder="Passwort" required />
-    <button type="submit">Registrieren</button>
-  </form>
-
-  <p v-if="success">Erfolgreich registriert – bitte E-Mail bestätigen ✅</p>
-  <p v-if="errorMsg" style="color: red;">{{ errorMsg }}</p>
+  <div>
+    <h1>Sign-Up</h1>
+    <form @submit.prevent="handleSignUp">
+      <input v-model="email" placeholder="Email" />
+      <input type="password" v-model="password" placeholder="Passwort" />
+      <button type="submit">Registrieren</button>
+    </form>
+    <p v-if="error">❌ {{ error }}</p>
+  </div>
 </template>
+
+<style scoped>
+form {
+  margin-bottom: 20px;
+}
+</style>
