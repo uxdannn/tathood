@@ -1,31 +1,56 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '~/lib/supabaseClient'
 import { useAuth } from '~/composables/useAuth'
 
 const router = useRouter()
+const route = useRoute()
 const { user, artistProfile, fetchUser, fetchArtistProfile, logout } = useAuth()
 
+const isLoading = ref(true)
 const artistName = ref('')
 const instagramHandle = ref('')
 const city = ref('')
 const success = ref(false)
 const error = ref(false)
-const isLoading = ref(true)
 
 onMounted(async () => {
-  await fetchUser()
+  // 1. Wenn User über E-Mail bestätigt, Tokens auslesen
+  const accessToken = route.query.access_token
+  const refreshToken = route.query.refresh_token
+  const type = route.query.type
 
-  if (!user.value) {
-    router.push('/login')
-    return
+  if (type === 'signup' && accessToken && refreshToken) {
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    })
+
+    if (!error) {
+      console.log('✅ Session nach E-Mail-Bestätigung gesetzt')
+      await fetchUser()
+      await fetchArtistProfile()
+      router.replace({ path: '/account' }) // URL aufräumen
+    } else {
+      console.error('❌ Fehler beim Setzen der Session:', error.message)
+    }
+  } else {
+    // 2. Normaler Login-Check
+    await fetchUser()
+
+    if (!user.value) {
+      router.push('/login')
+      return
+    }
+
+    await fetchArtistProfile()
   }
 
-  await fetchArtistProfile()
   isLoading.value = false
 })
 
+// 3. Profil erstellen
 const handleSubmit = async () => {
   error.value = false
   success.value = false
@@ -35,8 +60,8 @@ const handleSubmit = async () => {
       user_id: user.value.id,
       name: artistName.value,
       instagram: instagramHandle.value,
-      city: city.value
-    }
+      city: city.value,
+    },
   ])
 
   if (insertError) {
@@ -48,7 +73,7 @@ const handleSubmit = async () => {
       user_id: user.value.id,
       name: artistName.value,
       instagram: instagramHandle.value,
-      city: city.value
+      city: city.value,
     }
     artistProfile.value = newProfile
     if (process.client) {
@@ -67,6 +92,7 @@ const handleSubmit = async () => {
     </template>
 
     <template v-else>
+      <!-- Profil vorhanden -->
       <div v-if="artistProfile">
         <p><strong>Name:</strong> {{ artistProfile.name }}</p>
         <p>
@@ -79,6 +105,7 @@ const handleSubmit = async () => {
         <p>✅ Du hast bereits ein Artist Profil angelegt.</p>
       </div>
 
+      <!-- Noch kein Profil -->
       <div v-else class="create-artist-profil">
         <h2>Artist Profil erstellen</h2>
         <form @submit.prevent="handleSubmit">
@@ -98,7 +125,20 @@ const handleSubmit = async () => {
 
 <style scoped>
 .create-artist-profil {
-  background-color: green;
+  background-color: #e6ffe6;
   padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+input {
+  display: block;
+  margin-bottom: 10px;
+  padding: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+button {
+  padding: 10px 20px;
+  cursor: pointer;
 }
 </style>

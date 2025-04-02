@@ -54,7 +54,6 @@ export function useAuth() {
       localStorage.removeItem('artistProfiles')
     }
 
-    // Direkt zur Login-Seite leiten
     if (process.client) {
       window.location.href = '/login'
     }
@@ -72,6 +71,14 @@ export function useAuth() {
     return { data, error }
   }
 
+  // NEU: Route-Schutz
+  const requireAuth = async () => {
+    await fetchUser()
+    if (!user.value) {
+      return navigateTo('/login')
+    }
+  }
+
   return {
     user,
     artistProfile,
@@ -80,5 +87,6 @@ export function useAuth() {
     logout,
     login,
     signUp,
+    requireAuth, // NEU
   }
 }

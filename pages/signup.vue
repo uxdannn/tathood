@@ -1,24 +1,24 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/useAuth'
 
 const email = ref('')
 const password = ref('')
 const error = ref(null)
+const successMessage = ref(null)
 
-const router = useRouter()
 const { signUp } = useAuth()
 
 const handleSignUp = async () => {
   error.value = null
+  successMessage.value = null
 
-  const { error: signUpError } = await signUp(email.value, password.value)
+  const { data, error: signUpError } = await signUp(email.value, password.value)
 
   if (signUpError) {
     error.value = signUpError.message
   } else {
-    router.push('/account')
+    successMessage.value = '✅ Erfolgreich registriert! Bitte bestätige deine E-Mail, bevor du dich einloggst.'
   }
 }
 </script>
@@ -31,7 +31,9 @@ const handleSignUp = async () => {
       <input type="password" v-model="password" placeholder="Passwort" />
       <button type="submit">Registrieren</button>
     </form>
-    <p v-if="error">❌ {{ error }}</p>
+
+    <p v-if="error" style="color: red">❌ {{ error }}</p>
+    <p v-if="successMessage" style="color: green">{{ successMessage }}</p>
   </div>
 </template>
 
